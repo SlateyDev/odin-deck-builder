@@ -155,6 +155,8 @@ Player :: struct {
 	hand : [dynamic]Card,
 	draw_pile : [dynamic]Card,
 	discard_pile : [dynamic]Card,
+	initial_draw_size : int,
+	hand_size : int,
 }
 
 main_deck : [dynamic]Card
@@ -163,12 +165,27 @@ player : Player
 SUIT :: enum {
 	Diamonds,
 	Clubs,
-	Hears,
+	Hearts,
 	Spades,
 }
 
 setup_cards :: proc() {
 	setup_main_deck()
+
+	player = Player{
+		initial_draw_size = 8,
+		hand_size = 5,
+	}
+
+	//Aquire cards from main deck to draw pile
+	move_cards(&player.draw_pile, &main_deck, player.initial_draw_size)
+
+	shuffle_cards(&player.draw_pile)
+
+	refill_hand()
+
+	fmt.println("Draw Pile:", player.draw_pile)
+	fmt.println("Hand:", player.hand)
 }
 
 destroy_cards :: proc() {
@@ -186,65 +203,61 @@ setup_main_deck :: proc() {
 		}
 	}
 
-	shuffle_deck()
+	shuffle_cards(&main_deck)
+
+	fmt.println(main_deck)
 }
 
-//Aquire a card from the deck
-aquire_from_deck_to_draw :: proc() {
-	card, ok := pop_front_safe(&main_deck)
-	if ok {
-		append(&player.draw_pile, card)
+//Move a number of cards from source to destination
+move_cards :: proc(dest: ^[dynamic]Card, source: ^[dynamic]Card, amount: int) {
+	for _ in 0..<amount {
+		card, ok := pop_front_safe(source)
+		if ok {
+			append(dest, card)
+		}
+	}
+}
+
+//Move the cards marked selected from source to destination and unmarked them
+move_selected_cards :: proc(dest: ^[dynamic]Card, source: ^[dynamic]Card) {
+	card_index := 0
+
+	for card_index < len(source) {
+		if source[card_index].selected {
+			source[card_index].selected = false
+			append(dest, source[card_index])
+			ordered_remove(source, card_index)
+		} else {
+			card_index += 1
+		}
 	}
 }
 
 //Shuffle the main deck
-shuffle_deck :: proc() {
-	for &card in main_deck {
+shuffle_cards :: proc(deck: ^[dynamic]Card) {
+	for &card in deck {
 		card.randomizer = rand.int31()
 	}
-	slice.sort_by_cmp(main_deck[:], card_shuffle_sorter)
+	slice.sort_by_cmp(deck[:], card_shuffle_sorter)
 }
 
 card_shuffle_sorter := proc(i: Card, j: Card) -> slice.Ordering {
 	if i.randomizer < j.randomizer do return .Less
 	if i.randomizer > j.randomizer do return .Greater
-	return .Less
+	return .Equal
 }
 
-//Shuffle the discard pile back into the draw pile
-shuffle_discard_to_draw :: proc() {
-	for &card in player.discard_pile {
-		card.randomizer = rand.int31()
-	}
-	slice.sort_by_cmp(player.discard_pile[:], card_shuffle_sorter)
-	append(&player.draw_pile, ..player.discard_pile[:])
-	clear(&player.discard_pile)
-}
-
-//Draw a card from the draw pile
-aquire_from_draw :: proc() {
-	card, ok := pop_front_safe(&player.draw_pile)
-
-	if !ok {
-		shuffle_discard_to_draw()
-		card, ok = pop_front_safe(&player.draw_pile)
-	}
-}
-
-//Discard a card from hand to the discard pile
-discard_selected_cards :: proc() {
-	run_search := true
-	for run_search {
-		run_search = false
-		for &card, card_index in player.hand {
-			if card.selected {
-				append(&player.discard_pile, card)
-				ordered_remove(&player.hand, card_index)
-				run_search = true
-				break
-			}
-		}
-	}
+//Refill cards from the draw pile, if the draw pile becomes empty, shuffle the discard pile back in
+//and draw the remaining
+refill_hand :: proc() {
+	cards_to_draw := player.hand_size - len(player.hand)
+	//If cards_to_draw is <0 then we have too many, should we discard some?
+	draw_pile_cards := min(cards_to_draw, len(player.draw_pile))
+	remaining_cards := cards_to_draw - draw_pile_cards
+	move_cards(&player.hand, &player.draw_pile, player.hand_size - len(player.hand))
+	shuffle_cards(&player.discard_pile)
+	move_cards(&player.draw_pile, &player.discard_pile, len(player.discard_pile))
+	move_cards(&player.hand, &player.draw_pile, remaining_cards)
 }
 
 test_entities :: proc() {
