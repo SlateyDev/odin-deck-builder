@@ -145,7 +145,7 @@ Sprite :: struct {
 }
 
 Card :: struct {
-	suit: SUIT,
+	suit: Card_Suit,
 	value: i32,
 	randomizer: i32,
 	selected: bool,
@@ -162,7 +162,7 @@ Player :: struct {
 main_deck : [dynamic]Card
 player : Player
 
-SUIT :: enum {
+Card_Suit :: enum {
 	Diamonds,
 	Clubs,
 	Hearts,
@@ -196,7 +196,7 @@ destroy_cards :: proc() {
 }
 
 setup_main_deck :: proc() {
-	for suit in SUIT {
+	for suit in Card_Suit {
 		for val in 1..=13 {
 			add_card := Card{suit = suit, value = i32(val)}
 			append(&main_deck, add_card)
