@@ -1,0 +1,3 @@
+Name,Cost,Kind,Flags,Test
+Blah,1,Upgrade,StartPerPlayer,AB
+Test,1,Tower,StartPerPlayer,CD

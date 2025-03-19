@@ -1,6 +1,6 @@
 #+feature dynamic-literals
 
-package main
+package game
 
 import "core:fmt"
 import "core:math/rand"
@@ -144,13 +144,6 @@ Sprite :: struct {
 	more_data: i32,
 }
 
-Card :: struct {
-	suit: Card_Suit,
-	value: i32,
-	randomizer: i32,
-	selected: bool,
-}
-
 Player :: struct {
 	hand : [dynamic]Card,
 	draw_pile : [dynamic]Card,
@@ -161,13 +154,6 @@ Player :: struct {
 
 main_deck : [dynamic]Card
 player : Player
-
-Card_Suit :: enum {
-	Diamonds,
-	Clubs,
-	Hearts,
-	Spades,
-}
 
 setup_cards :: proc() {
 	setup_main_deck()
@@ -182,7 +168,7 @@ setup_cards :: proc() {
 
 	shuffle_cards(&player.draw_pile)
 
-	refill_hand()
+	refill_hand(&player.hand, &player.draw_pile, &player.discard_pile, player.hand_size)
 
 	fmt.println("Draw Pile:", player.draw_pile)
 	fmt.println("Hand:", player.hand)
@@ -196,26 +182,12 @@ destroy_cards :: proc() {
 }
 
 setup_main_deck :: proc() {
-	for suit in Card_Suit {
-		for val in 1..=13 {
-			add_card := Card{suit = suit, value = i32(val)}
-			append(&main_deck, add_card)
-		}
-	}
+	definitions := make([dynamic]Card_Definition)
+	setup_card_definitions(&definitions)
 
 	shuffle_cards(&main_deck)
 
 	fmt.println(main_deck)
-}
-
-//Move a number of cards from source to destination
-move_cards :: proc(dest: ^[dynamic]Card, source: ^[dynamic]Card, amount: int) {
-	for _ in 0..<amount {
-		card, ok := pop_front_safe(source)
-		if ok {
-			append(dest, card)
-		}
-	}
 }
 
 //Move the cards marked selected from source to destination and unmarked them
@@ -231,33 +203,6 @@ move_selected_cards :: proc(dest: ^[dynamic]Card, source: ^[dynamic]Card) {
 			card_index += 1
 		}
 	}
-}
-
-//Shuffle the main deck
-shuffle_cards :: proc(deck: ^[dynamic]Card) {
-	for &card in deck {
-		card.randomizer = rand.int31()
-	}
-	slice.sort_by_cmp(deck[:], card_shuffle_sorter)
-}
-
-card_shuffle_sorter := proc(i: Card, j: Card) -> slice.Ordering {
-	if i.randomizer < j.randomizer do return .Less
-	if i.randomizer > j.randomizer do return .Greater
-	return .Equal
-}
-
-//Refill cards from the draw pile, if the draw pile becomes empty, shuffle the discard pile back in
-//and draw the remaining
-refill_hand :: proc() {
-	cards_to_draw := player.hand_size - len(player.hand)
-	//If cards_to_draw is <0 then we have too many, should we discard some?
-	draw_pile_cards := min(cards_to_draw, len(player.draw_pile))
-	remaining_cards := cards_to_draw - draw_pile_cards
-	move_cards(&player.hand, &player.draw_pile, player.hand_size - len(player.hand))
-	shuffle_cards(&player.discard_pile)
-	move_cards(&player.draw_pile, &player.discard_pile, len(player.discard_pile))
-	move_cards(&player.hand, &player.draw_pile, remaining_cards)
 }
 
 test_entities :: proc() {
