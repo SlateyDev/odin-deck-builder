@@ -9,6 +9,9 @@ import "core:slice"
 import "core:strings"
 import rl "vendor:raylib"
 
+DEG_TO_RAD :: 3.141592654 / 180
+RAD_TO_DEG :: 180 / 3.141592654
+
 main :: proc() {
 	when ODIN_DEBUG {
 		track: mem.Tracking_Allocator
@@ -127,8 +130,26 @@ start_game :: proc() {
 
 			rl.DrawText("Testing", 190, 200, 20, rl.LIGHTGRAY)
 
-			rl.DrawTexturePro(test_texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, 45, rl.WHITE)
+			rotation := f32(rl.GetTime()) * 10
 
+			card_rect := rl.Rectangle{0, 0, CARD_WIDTH, CARD_HEIGHT}
+			card_rotation_rad := rotation * DEG_TO_RAD
+			tl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			tr := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			bl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			br := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+
+			points : []rl.Vector2 = {tl, tr, br, bl}
+			if rl.CheckCollisionPointPoly(rl.GetMousePosition(), raw_data(points), 4) {
+				rl.DrawTexturePro(test_texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
+			} else {
+				rl.DrawTexturePro(test_texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
+			}
+
+			// rl.DrawLineV(tl, tr, rl.RED)
+			// rl.DrawLineV(tr, br, rl.RED)
+			// rl.DrawLineV(br, bl, rl.RED)
+			// rl.DrawLineV(bl, tl, rl.RED)
 			fps := int(rl.GetFPS())
 
 			strings.builder_reset(&builder)
