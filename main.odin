@@ -9,9 +9,6 @@ import "core:slice"
 import "core:strings"
 import rl "vendor:raylib"
 
-test_image: rl.Image
-test_texture: rl.Texture2D
-
 main :: proc() {
 	when ODIN_DEBUG {
 		track: mem.Tracking_Allocator
@@ -51,15 +48,21 @@ start_game :: proc() {
 	defer rl.CloseWindow()
 
 	// test_image = rl.GenImageChecked(CARD_WIDTH, CARD_HEIGHT, 16, 16, rl.RED, rl.BLUE)
-	test_image = rl.LoadImage("assets/card_layout.png")
+	test_image := rl.LoadImage("assets/card_layout.png")
 	defer rl.UnloadImage(test_image)
 
-	rl.ImageDrawText(&test_image, "Effects", 85, 315, 12, rl.BLACK)
+	test_font := rl.LoadFont("assets/OLDSH___.TTF")
+	defer rl.UnloadFont(test_font)
+	rl.GenTextureMipmaps(&test_font.texture)
+	rl.SetTextureFilter(test_font.texture, .TRILINEAR)
 
-	test_texture = rl.LoadTextureFromImage(test_image)
+	image_draw_centered_text(&test_image, test_font, "CARD TITLE", {CARD_WIDTH / 2, 273}, 12, rl.WHITE)
+	image_draw_text_boxed(&test_image, test_font, "Testing adding some flavour text to see how it fills up the text area that has been defined", {83, 315, 112, 22}, 12, 2, true, rl.BLACK, -10)
+
+	test_texture := rl.LoadTextureFromImage(test_image)
 	defer rl.UnloadTexture(test_texture)
-
-	// cardsTexture := rl.LoadTexture("Cards.png")
+	rl.GenTextureMipmaps(&test_texture)
+	rl.SetTextureFilter(test_texture, .TRILINEAR)
 
 	rl.SetWindowState({rl.ConfigFlag.WINDOW_RESIZABLE})
 

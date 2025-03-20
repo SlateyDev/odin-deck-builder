@@ -1,12 +1,18 @@
 package game
 
+import "core:fmt"
 import "core:strings"
 import rl "vendor:raylib"
+
+image_draw_centered_text :: proc(dst: ^rl.Image, font: rl.Font, text: cstring, pos: rl.Vector2, font_size: f32, fore_color: rl.Color) {
+	text_size := rl.MeasureTextEx(font, text, font_size, 2)
+	rl.ImageDrawTextEx(dst, font, text, {pos.x - text_size.x / 2, pos.y - text_size.y / 2}, font_size, 2, rl.WHITE)
+}
 
 MEASURE_STATE :: false
 DRAW_STATE :: true
 
-draw_text_boxed :: proc(font: rl.Font, text: string, rec: rl.Rectangle, fontSize: f32, spacing: f32, wordWrap: bool, tint: rl.Color) {
+image_draw_text_boxed :: proc(dst: ^rl.Image, font: rl.Font, text: string, rec: rl.Rectangle, fontSize: f32, spacing: f32, wordWrap: bool, tint: rl.Color, leading: f32 = 0.0) {
 	length := i32(len(text))
 
 	textOffsetY : f32 = 0.0          // Offset between lines (on line break '\n')
@@ -78,26 +84,26 @@ draw_text_boxed :: proc(font: rl.Font, text: string, rec: rl.Rectangle, fontSize
         } else {
             if codepoint == '\n' {
                 if !wordWrap {
-                    textOffsetY += f32(font.baseSize + font.baseSize/2)*scaleFactor
+                    textOffsetY += f32(font.baseSize + font.baseSize/2)*scaleFactor + leading
                     textOffsetX = 0
                 }
             } else {
                 if !wordWrap && ((textOffsetX + glyphWidth) > rec.width) {
-                    textOffsetY += f32(font.baseSize + font.baseSize/2)*scaleFactor
+                    textOffsetY += f32(font.baseSize + font.baseSize/2)*scaleFactor + leading
                     textOffsetX = 0
                 }
 
                 // When text overflows rectangle height limit, just stop drawing
-                if (textOffsetY + f32(font.baseSize)*scaleFactor) > rec.height do break
+                if (textOffsetY + f32(font.baseSize)*scaleFactor + leading) > rec.height do break
 
                 // Draw current character glyph
                 if (codepoint != ' ') && (codepoint != '\t') {
-                    rl.DrawTextCodepoint(font, codepoint, { rec.x + textOffsetX, rec.y + textOffsetY }, fontSize, tint)
+                    rl.ImageDrawTextEx(dst, font, fmt.ctprintf("%r", codepoint), { rec.x + textOffsetX, rec.y + textOffsetY }, fontSize, 0, tint)
                 }
             }
 
             if wordWrap && (i == endLine) {
-                textOffsetY += f32(font.baseSize + font.baseSize/2)*scaleFactor
+                textOffsetY += f32(font.baseSize + font.baseSize/2)*scaleFactor + leading
                 textOffsetX = 0
                 startLine = endLine
                 endLine = -1

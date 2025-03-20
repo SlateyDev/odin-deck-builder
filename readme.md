@@ -15,3 +15,18 @@ Idea: (This will change as the game develops)
 * Some cards will have a monetary amount on them. Using this monetary amount will allow you to buy from the market.
 * Any money not used on selected cards is lost.
 * Attack cards can only be used on a single monster, not split over multiple, unless the card states otherwise.
+
+### TODO:
+- [ ] Selection of cards to use
+- [ ] Create card definitions
+- [x] Render some text to card word-wrapped inside an area
+- [x] Draw title centered in area
+  - Currently looks slightly off center and need to find out why
+
+### Optional:
+- [ ] Better card layout image
+- [ ] Card effects
+- [ ] Drag/drop cards
+- [x] Use a different font
+- [ ] Card back
+- [ ] Animate flipping of card
