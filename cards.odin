@@ -4,6 +4,7 @@ import "core:encoding/csv"
 import "core:fmt"
 import "core:math/rand"
 import "core:slice"
+import rl "vendor:raylib"
 
 Card_Kind :: enum {
     Action,
@@ -99,4 +100,31 @@ refill_hand :: proc(hand: ^[dynamic]Card, draw: ^[dynamic]Card, discard: ^[dynam
 	shuffle_cards(discard)
 	move_cards(draw, discard, len(discard))
 	move_cards(hand, draw, remaining_cards)
+}
+
+CARD_WIDTH :: 278
+CARD_HEIGHT :: 378
+
+//Change to draw a card image and overlay with text
+draw_card :: proc(mouse_pos: rl.Vector2, position: rl.Vector2, card_info: Card, select_card: proc(Card)) {
+	card_rect := rl.Rectangle{position.x - CARD_WIDTH / 2, position.y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT}
+	brightness : f32 = 0
+	if rl.CheckCollisionPointRec(mouse_pos, card_rect) {
+		brightness = 0.2
+		if rl.IsMouseButtonReleased(.LEFT) {
+			if select_card != nil {
+				select_card(card_info)
+			}
+		}
+	}
+	rl.DrawRectangleRounded(card_rect, 0.14, 30, rl.ColorBrightness(rl.BEIGE, brightness))
+	rl.DrawRectangleRoundedLinesEx(card_rect, 0.14, 30, 1.5, rl.RED)
+
+	rl.DrawRectangleRounded(rl.Rectangle{position.x - CARD_WIDTH / 2 + 5, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 10, CARD_WIDTH - 10, CARD_HEIGHT / 4}, 0.24, 30, rl.BLUE)
+	rl.DrawRectangleRoundedLinesEx(rl.Rectangle{position.x - CARD_WIDTH / 2 + 5, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 10, CARD_WIDTH - 10, CARD_HEIGHT / 4}, 0.24, 30, 1.5, rl.BLACK)
+
+	text_width := rl.MeasureText("Title", 20)
+	rl.DrawText("Title", i32(position.x) - text_width / 2, i32(position.y) - CARD_HEIGHT / 2 + 10, 20, rl.WHITE)
+
+	draw_text_boxed(rl.GetFontDefault(), "Here we add some flavour text with maybe a little bit of lorem ipsum. Just kidding, I can't remember lorem ipsum off by heart and I will just type some text to see what happened if it is really long", rl.Rectangle{position.x - CARD_WIDTH / 2 + 7, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 8, CARD_WIDTH - 14, CARD_HEIGHT / 4}, 10, 1.0, true, rl.WHITE)
 }

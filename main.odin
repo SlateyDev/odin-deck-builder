@@ -9,6 +9,9 @@ import "core:slice"
 import "core:strings"
 import rl "vendor:raylib"
 
+test_image: rl.Image
+test_texture: rl.Texture2D
+
 main :: proc() {
 	when ODIN_DEBUG {
 		track: mem.Tracking_Allocator
@@ -36,14 +39,25 @@ main :: proc() {
 
 	setup_cards()
 	destroy_cards()
+
+	start_game()
 }
 
 start_game :: proc() {
-	screenWidth: i32 = 1280
-	screenHeight: i32 = 720
+	screenWidth: i32 = 1920
+	screenHeight: i32 = 1080
 
 	rl.InitWindow(screenWidth, screenHeight, "Deck Builder")
 	defer rl.CloseWindow()
+
+	// test_image = rl.GenImageChecked(CARD_WIDTH, CARD_HEIGHT, 16, 16, rl.RED, rl.BLUE)
+	test_image = rl.LoadImage("assets/card_layout.png")
+	defer rl.UnloadImage(test_image)
+
+	rl.ImageDrawText(&test_image, "Effects", 85, 315, 12, rl.BLACK)
+
+	test_texture = rl.LoadTextureFromImage(test_image)
+	defer rl.UnloadTexture(test_texture)
 
 	// cardsTexture := rl.LoadTexture("Cards.png")
 
@@ -104,21 +118,23 @@ start_game :: proc() {
 			defer rl.EndMode2D()
 
 			currentScreenWidth := rl.GetScreenWidth()
-			// currentScreenHeight := rl.GetScreenHeight()
+			currentScreenHeight := rl.GetScreenHeight()
 
 			rl.ClearBackground(rl.BEIGE)
 
 			rl.DrawText("Testing", 190, 200, 20, rl.LIGHTGRAY)
+
+			rl.DrawTexturePro(test_texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, 45, rl.WHITE)
 
 			fps := int(rl.GetFPS())
 
 			strings.builder_reset(&builder)
 			strings.write_string(&builder, "FPS: ")
 			strings.write_int(&builder, fps)
-			fpsString := strings.to_cstring(&builder)
-
-			fpsStringLength := rl.MeasureText(fpsString, 20)
-			rl.DrawText(fpsString, currentScreenWidth - fpsStringLength - 20, 20, 20, rl.WHITE)
+			if fpsString, err := strings.to_cstring(&builder); err == nil {
+				fpsStringLength := rl.MeasureText(fpsString, 20)
+				rl.DrawText(fpsString, currentScreenWidth - fpsStringLength - 20, 20, 20, rl.WHITE)
+			}
 		}
 	}
 }
