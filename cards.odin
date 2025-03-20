@@ -97,9 +97,11 @@ refill_hand :: proc(hand: ^[dynamic]Card, draw: ^[dynamic]Card, discard: ^[dynam
 	draw_pile_cards := min(cards_to_draw, len(draw))
 	remaining_cards := cards_to_draw - draw_pile_cards
 	move_cards(hand, draw, hand_size - len(hand))
-	shuffle_cards(discard)
-	move_cards(draw, discard, len(discard))
-	move_cards(hand, draw, remaining_cards)
+	if remaining_cards > 0 {
+		shuffle_cards(discard)
+		move_cards(draw, discard, len(discard))
+		move_cards(hand, draw, remaining_cards)
+	}
 }
 
 CARD_WIDTH :: 278
