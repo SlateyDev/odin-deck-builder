@@ -19,6 +19,8 @@ Idea: (This will change as the game develops)
 ### TODO:
 - [ ] Selection of cards to use
 - [ ] Create card definitions
+  - [ ] Starter cards
+  - [ ] Rewarded cards
 - [x] Render some text to card word-wrapped inside an area
 - [x] Draw title centered in area
   - Currently looks slightly off center and need to find out why
@@ -30,3 +32,7 @@ Idea: (This will change as the game develops)
 - [x] Use a different font
 - [ ] Card back
 - [ ] Animate flipping of card
+- [x] Fanning cards
+- [x] Highlighting of hovered card
+- [ ] Animate hovered card out and back again when not hovered
+- [ ] Perform actions against enemy

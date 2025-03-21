@@ -7,8 +7,9 @@ import "core:slice"
 import rl "vendor:raylib"
 
 Card_Kind :: enum {
-    Action,
-    Upgrade,
+    Attack,
+    Skill,
+	Power,
 }
 
 Card :: struct {
@@ -22,24 +23,29 @@ Card_Definition :: struct {
 	flavour: string,
     use_cost: int,
     kind: Card_Kind,
-    data: union {
-        Card_Action,
-        Card_Upgrade,
-    },
 	texture: rl.Texture2D,
+	card_proc: proc(),
 }
 
-Card_Upgrade :: struct {
+card_strike :: proc() {
 
 }
 
-Card_Action :: struct {
+card_defend :: proc() {
+
+}
+
+card_bash :: proc() {
 
 }
 
 cards := string(#load("card_definitions.csv"))
 
 card_definitions : [dynamic]Card_Definition
+
+strike_card_definition : Card_Definition = {name = "Strike", flavour = "Deal 6 damage.", use_cost = 1, kind = .Attack, card_proc = card_strike}
+defend_card_definition : Card_Definition = {name = "Defend", flavour = "Gain 5 Block.", use_cost = 1, kind = .Skill, card_proc = card_defend}
+bash_card_definition : Card_Definition = {name = "Bash", flavour = "Deal 8 damage.\nApply 2 Vulnerable.", use_cost = 2, kind = .Attack, card_proc = card_bash}
 
 setup_card_definitions :: proc() {
 	card_definitions = make([dynamic]Card_Definition)
@@ -55,6 +61,10 @@ setup_card_definitions :: proc() {
         delete(csv_data)
     }
     fmt.println(csv_data)
+
+	// append(&card_definitions, Card_Definition{name = "CArd1", flavour = "", use_cost = 1, kind = .Attack, card_proc = card_})
+	// append(&card_definitions, Card_Definition{name = "Card2", flavour = "", use_cost = 1, kind = .Skill, card_proc = card_})
+	// append(&card_definitions, Card_Definition{name = "Card3", flavour = "", use_cost = 2, kind = .Attack, card_proc = card_})
 }
 
 cleanup_card_definitions :: proc() {

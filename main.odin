@@ -3,6 +3,7 @@
 package game
 
 import "core:fmt"
+import "core:math"
 import "core:math/rand"
 import "core:mem"
 import "core:slice"
@@ -116,21 +117,38 @@ start_game :: proc() {
 
 			rl.DrawText("Testing", 190, 200, 20, rl.LIGHTGRAY)
 
-			rotation := f32(rl.GetTime()) * 10
+			// rotation := f32(rl.GetTime()) * 10
 
-			card_rect := rl.Rectangle{0, 0, CARD_WIDTH, CARD_HEIGHT}
-			card_rotation_rad := rotation * DEG_TO_RAD
-			tl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
-			tr := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
-			bl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
-			br := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			// card_rect := rl.Rectangle{0, 0, CARD_WIDTH, CARD_HEIGHT}
+			// card_rotation_rad := rotation * DEG_TO_RAD
+			// tl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			// tr := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			// bl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			// br := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
 
-			points : []rl.Vector2 = {tl, tr, br, bl}
-			if rl.CheckCollisionPointPoly(rl.GetMousePosition(), raw_data(points), 4) {
-				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
-			} else {
-				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
+			// points : []rl.Vector2 = {tl, tr, br, bl}
+			// if rl.CheckCollisionPointPoly(rl.GetMousePosition(), raw_data(points), 4) {
+			// 	rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
+			// } else {
+			// 	rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
+			// }
+
+			for _, card_index in player.hand {
+				card_x_pos := f32(currentScreenWidth - i32(len(player.hand) - 1) * 200) / 2 + f32(card_index) * 200
+				card_y_pos := f32(currentScreenHeight) - 120 - math.cos((f32(len(player.hand) / 2) - f32(card_index))) * 50
+				rotation := -(f32(len(player.hand) / 2) - f32(card_index)) * 10
+
+				if rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, card_y_pos - 200, 200, CARD_HEIGHT}) {
+					rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {card_x_pos, card_y_pos, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
+				} else {
+					rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {card_x_pos, card_y_pos, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
+				}
 			}
+
+			// for _, card_index in player.hand {
+			// 	card_x_pos := f32(currentScreenWidth - i32(len(player.hand) - 1) * 200) / 2 + f32(card_index) * 200
+			// 	rl.DrawRectangleLinesEx({card_x_pos - 100, f32(currentScreenHeight) / 2 - 200, 200, CARD_HEIGHT}, 1, rl.RED)
+			// }
 
 			// rl.DrawLineV(tl, tr, rl.RED)
 			// rl.DrawLineV(tr, br, rl.RED)
@@ -174,33 +192,39 @@ Player :: struct {
 	hand: [dynamic]Card,
 	draw_pile: [dynamic]Card,
 	discard_pile: [dynamic]Card,
-	initial_draw_size: int,
 	hand_size: int,
 
 	health: int,
-	armour: int,
 	energy: int,
 	energy_per_turn: int,
+
+	status_effects: Status_Effects,
+}
+
+Status_Effects :: struct {
+	Vulnerable: int,	//Turns of vulnerability. 50% more damage taken
+	Block: int,			//Amount of damage being blocked
+	Weak: int,			//Turns of reduced damage output. 25% less attack damage
+	Poisoned: int,		//Amount of HP to lose and stacks remaining
 }
 
 Enemy :: struct {
 	health: int,
-	status_effects: [dynamic]Effect,
+	status_effects: Status_Effects,
 }
 
-Effect_Type :: enum {
-	Poison,		//DOT
-	Bleeding,	//DOT
-	Shell,		//Magical Protection
-	Barrier,	//Physical Protection
-	Reflect,	//Reflect magical attacks
-	Regen,		//Regenerate health
-}
-
-Effect :: struct {
-	rounds: int,
-	effect_type: Effect_Type,
-}
+// Effect_Type :: enum {
+// 	Poison,		//DOT
+// 	Bleeding,	//DOT
+// 	Shell,		//Magical Protection
+// 	Barrier,	//Physical Protection
+// 	Reflect,	//Reflect magical attacks
+// 	Regen,		//Regenerate health
+// }
+// Effect :: struct {
+// 	rounds: int,
+// 	effect_type: Effect_Type,
+// }
 
 player : Player
 
@@ -208,9 +232,22 @@ setup_cards :: proc() {
 	setup_card_definitions()
 
 	player = Player{
-		initial_draw_size = 8,
 		hand_size = 5,
+		health = 50,
+		energy = 4,
+		energy_per_turn = 4,
 	}
+
+	append(&player.draw_pile, Card{definition = &strike_card_definition})
+	append(&player.draw_pile, Card{definition = &strike_card_definition})
+	append(&player.draw_pile, Card{definition = &strike_card_definition})
+	append(&player.draw_pile, Card{definition = &strike_card_definition})
+	append(&player.draw_pile, Card{definition = &strike_card_definition})
+	append(&player.draw_pile, Card{definition = &defend_card_definition})
+	append(&player.draw_pile, Card{definition = &defend_card_definition})
+	append(&player.draw_pile, Card{definition = &defend_card_definition})
+	append(&player.draw_pile, Card{definition = &defend_card_definition})
+	append(&player.draw_pile, Card{definition = &bash_card_definition})
 
 	//TODO: We don't have a main deck here, this game would more likely have a collection of starting cards and then you acquire more over time
 	//So the draw_pile should be seeded with the starting cards to begin with
