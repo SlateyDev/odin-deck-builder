@@ -19,6 +19,7 @@ Card :: struct {
 
 Card_Definition :: struct {
     name: string,
+	flavour: string,
     use_cost: int,
     kind: Card_Kind,
     data: union {
@@ -129,4 +130,27 @@ draw_card :: proc(mouse_pos: rl.Vector2, position: rl.Vector2, card_info: Card, 
 	rl.DrawText("Title", i32(position.x) - text_width / 2, i32(position.y) - CARD_HEIGHT / 2 + 10, 20, rl.WHITE)
 
 	// draw_text_boxed(rl.GetFontDefault(), "Here we add some flavour text with maybe a little bit of lorem ipsum. Just kidding, I can't remember lorem ipsum off by heart and I will just type some text to see what happened if it is really long", rl.Rectangle{position.x - CARD_WIDTH / 2 + 7, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 8, CARD_WIDTH - 14, CARD_HEIGHT / 4}, 10, 1.0, true, rl.WHITE)
+}
+
+create_card_texture :: proc(card_info: Card) -> rl.Texture2D {
+	//TODO: Instead of loading every time, it should use a cached image and use ImageCopy.
+	card_layout := rl.LoadImage("assets/card_layout.png")
+	defer rl.UnloadImage(card_layout)
+
+	//TODO: Instead of loading every time, it should use a cached font.
+	card_font := rl.LoadFont("assets/OLDSH___.TTF")
+	defer rl.UnloadFont(card_font)
+	rl.GenTextureMipmaps(&card_font.texture)
+	rl.SetTextureFilter(card_font.texture, .TRILINEAR)
+
+	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%s", card_info.definition.name), {CARD_WIDTH / 2, 273}, 12, rl.WHITE)
+	image_draw_text_boxed(&card_layout, card_font, card_info.definition.flavour, {83, 315, 112, 22}, 12, 1, true, rl.BLACK, -10)
+	rl.ImageDrawCircle(&card_layout, 38, 44, 20, rl.BLACK)
+	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%d", card_info.definition.use_cost), {38, 44}, 24, rl.GREEN)
+
+	texture := rl.LoadTextureFromImage(card_layout)
+	rl.GenTextureMipmaps(&texture)
+	rl.SetTextureFilter(texture, .TRILINEAR)
+
+	return texture
 }

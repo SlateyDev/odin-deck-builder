@@ -6,7 +6,7 @@ import rl "vendor:raylib"
 
 image_draw_centered_text :: proc(dst: ^rl.Image, font: rl.Font, text: cstring, pos: rl.Vector2, font_size: f32, fore_color: rl.Color) {
 	text_size := rl.MeasureTextEx(font, text, font_size, 2)
-	rl.ImageDrawTextEx(dst, font, text, {pos.x - text_size.x / 2, pos.y - text_size.y / 2}, font_size, 2, rl.WHITE)
+	rl.ImageDrawTextEx(dst, font, text, {pos.x - text_size.x / 2, pos.y - text_size.y / 2}, font_size, 2, fore_color)
 }
 
 MEASURE_STATE :: false

@@ -50,22 +50,8 @@ start_game :: proc() {
 	rl.InitWindow(screenWidth, screenHeight, "Deck Builder")
 	defer rl.CloseWindow()
 
-	// test_image = rl.GenImageChecked(CARD_WIDTH, CARD_HEIGHT, 16, 16, rl.RED, rl.BLUE)
-	test_image := rl.LoadImage("assets/card_layout.png")
-	defer rl.UnloadImage(test_image)
-
-	test_font := rl.LoadFont("assets/OLDSH___.TTF")
-	defer rl.UnloadFont(test_font)
-	rl.GenTextureMipmaps(&test_font.texture)
-	rl.SetTextureFilter(test_font.texture, .TRILINEAR)
-
-	image_draw_centered_text(&test_image, test_font, "CARD TITLE", {CARD_WIDTH / 2, 273}, 12, rl.WHITE)
-	image_draw_text_boxed(&test_image, test_font, "Testing adding some flavour text to see how it fills up the text area that has been defined", {83, 315, 112, 22}, 12, 2, true, rl.BLACK, -10)
-
-	test_texture := rl.LoadTextureFromImage(test_image)
-	defer rl.UnloadTexture(test_texture)
-	rl.GenTextureMipmaps(&test_texture)
-	rl.SetTextureFilter(test_texture, .TRILINEAR)
+	card := create_card_texture(Card{definition = &{name = "CARD TITLE", flavour = "Testing adding some flavour text to see how it fills up the text area that has been defined", use_cost = 2}})
+	defer rl.UnloadTexture(card)
 
 	rl.SetWindowState({rl.ConfigFlag.WINDOW_RESIZABLE})
 
@@ -141,9 +127,9 @@ start_game :: proc() {
 
 			points : []rl.Vector2 = {tl, tr, br, bl}
 			if rl.CheckCollisionPointPoly(rl.GetMousePosition(), raw_data(points), 4) {
-				rl.DrawTexturePro(test_texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
+				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
 			} else {
-				rl.DrawTexturePro(test_texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
+				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
 			}
 
 			// rl.DrawLineV(tl, tr, rl.RED)
