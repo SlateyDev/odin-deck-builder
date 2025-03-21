@@ -26,6 +26,7 @@ Card_Definition :: struct {
         Card_Action,
         Card_Upgrade,
     },
+	texture: rl.Texture2D,
 }
 
 Card_Upgrade :: struct {
@@ -38,8 +39,12 @@ Card_Action :: struct {
 
 cards := string(#load("card_definitions.csv"))
 
-setup_card_definitions :: proc(definitions: ^[dynamic]Card_Definition) {
-    csv_data, _ := csv.read_all_from_string(cards)
+card_definitions : [dynamic]Card_Definition
+
+setup_card_definitions :: proc() {
+	card_definitions = make([dynamic]Card_Definition)
+
+	csv_data, _ := csv.read_all_from_string(cards)
     defer {
         for record in csv_data {
             for &datum in record {
@@ -50,6 +55,10 @@ setup_card_definitions :: proc(definitions: ^[dynamic]Card_Definition) {
         delete(csv_data)
     }
     fmt.println(csv_data)
+}
+
+cleanup_card_definitions :: proc() {
+	delete(card_definitions)
 }
 
 //Shuffle a deck of cards

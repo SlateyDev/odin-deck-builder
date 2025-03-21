@@ -38,7 +38,7 @@ main :: proc() {
 	test_entities()
 
 	setup_cards()
-	destroy_cards()
+	defer destroy_cards()
 
 	start_game()
 }
@@ -202,21 +202,17 @@ Effect :: struct {
 	effect_type: Effect_Type,
 }
 
-// main_deck : [dynamic]Card
 player : Player
 
 setup_cards :: proc() {
-	setup_main_deck()
+	setup_card_definitions()
 
 	player = Player{
 		initial_draw_size = 8,
 		hand_size = 5,
 	}
 
-	//Aquire cards from main deck to draw pile
-	// move_cards(&player.draw_pile, &main_deck, player.initial_draw_size)
-
-	//TODO: Instead of having a main deck, this game would more likely have a collection of starting cards and then you acquire more over time
+	//TODO: We don't have a main deck here, this game would more likely have a collection of starting cards and then you acquire more over time
 	//So the draw_pile should be seeded with the starting cards to begin with
 
 	shuffle_cards(&player.draw_pile)
@@ -228,19 +224,10 @@ setup_cards :: proc() {
 }
 
 destroy_cards :: proc() {
-	// delete(main_deck)
 	delete(player.discard_pile)
 	delete(player.draw_pile)
 	delete(player.hand)
-}
-
-setup_main_deck :: proc() {
-	definitions := make([dynamic]Card_Definition)
-	setup_card_definitions(&definitions)
-
-	// shuffle_cards(&main_deck)
-
-	// fmt.println(main_deck)
+	cleanup_card_definitions()
 }
 
 //Move the cards marked selected from source to destination and unmarked them
