@@ -3,6 +3,7 @@
 package game
 
 import "core:fmt"
+import la "core:math/linalg"
 import "core:math"
 import "core:math/rand"
 import "core:mem"
@@ -117,32 +118,37 @@ start_game :: proc() {
 
 			rl.DrawText("Testing", 190, 200, 20, rl.LIGHTGRAY)
 
-			// rotation := f32(rl.GetTime()) * 10
+			if rl.IsKeyPressed(.A) {
+				draw_card(&player.player_cards)
+			}
 
-			// card_rect := rl.Rectangle{0, 0, CARD_WIDTH, CARD_HEIGHT}
-			// card_rotation_rad := rotation * DEG_TO_RAD
-			// tl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
-			// tr := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
-			// bl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
-			// br := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2}
+			found_hover := false
+			for &hand_card, card_index in player.player_cards.hand {
+				card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(card_index) * 200
+				card_y_pos := f32(currentScreenHeight) - 120 - math.cos((f32(len(player.player_cards.hand) / 2) - f32(card_index))) * 50
+				rotation := -(f32(len(player.player_cards.hand) - 1) / 2 - f32(card_index)) * 10
+				card_tint := rl.GRAY
 
-			// points : []rl.Vector2 = {tl, tr, br, bl}
-			// if rl.CheckCollisionPointPoly(rl.GetMousePosition(), raw_data(points), 4) {
-			// 	rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
-			// } else {
-			// 	rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {f32(currentScreenWidth) / 2, f32(currentScreenHeight) / 2, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
-			// }
+				if rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), 200, CARD_HEIGHT + 50}) {
+					card_y_pos = f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
+					rotation = 0
 
-			for _, card_index in player.hand {
-				card_x_pos := f32(currentScreenWidth - i32(len(player.hand) - 1) * 200) / 2 + f32(card_index) * 200
-				card_y_pos := f32(currentScreenHeight) - 120 - math.cos((f32(len(player.hand) / 2) - f32(card_index))) * 50
-				rotation := -(f32(len(player.hand) / 2) - f32(card_index)) * 10
-
-				if rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, card_y_pos - 200, 200, CARD_HEIGHT}) {
-					rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {card_x_pos, card_y_pos, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.WHITE)
+					card_tint = rl.WHITE
+					found_hover = true
 				} else {
-					rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {card_x_pos, card_y_pos, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, rl.GRAY)
+					if rl.CheckCollisionPointRec(rl.GetMousePosition(), {f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), f32(len(player.player_cards.hand) * 200), CARD_HEIGHT + 50}) {
+						if !found_hover {
+							card_x_pos -= 80
+						} else {
+							card_x_pos += 80
+						}
+					}
 				}
+
+				hand_card.position = la.lerp(hand_card.position, rl.Vector2{card_x_pos, card_y_pos}, rl.GetFrameTime() * 5)
+				hand_card.rotation = la.lerp(hand_card.rotation, rotation, rl.GetFrameTime() * 5)
+
+				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {hand_card.position.x, hand_card.position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, hand_card.rotation, card_tint)
 			}
 
 			// for _, card_index in player.hand {
@@ -189,10 +195,7 @@ Sprite :: struct {
 }
 
 Player :: struct {
-	hand: [dynamic]Card,
-	draw_pile: [dynamic]Card,
-	discard_pile: [dynamic]Card,
-	hand_size: int,
+	player_cards: Player_Cards,
 
 	health: int,
 	energy: int,
@@ -232,38 +235,38 @@ setup_cards :: proc() {
 	setup_card_definitions()
 
 	player = Player{
-		hand_size = 5,
+		player_cards = Player_Cards {hand_size = 5},
 		health = 50,
 		energy = 4,
 		energy_per_turn = 4,
 	}
 
-	append(&player.draw_pile, Card{definition = &strike_card_definition})
-	append(&player.draw_pile, Card{definition = &strike_card_definition})
-	append(&player.draw_pile, Card{definition = &strike_card_definition})
-	append(&player.draw_pile, Card{definition = &strike_card_definition})
-	append(&player.draw_pile, Card{definition = &strike_card_definition})
-	append(&player.draw_pile, Card{definition = &defend_card_definition})
-	append(&player.draw_pile, Card{definition = &defend_card_definition})
-	append(&player.draw_pile, Card{definition = &defend_card_definition})
-	append(&player.draw_pile, Card{definition = &defend_card_definition})
-	append(&player.draw_pile, Card{definition = &bash_card_definition})
+	append(&player.player_cards.draw, Card{definition = &strike_card_definition})
+	append(&player.player_cards.draw, Card{definition = &strike_card_definition})
+	append(&player.player_cards.draw, Card{definition = &strike_card_definition})
+	append(&player.player_cards.draw, Card{definition = &strike_card_definition})
+	append(&player.player_cards.draw, Card{definition = &strike_card_definition})
+	append(&player.player_cards.draw, Card{definition = &defend_card_definition})
+	append(&player.player_cards.draw, Card{definition = &defend_card_definition})
+	append(&player.player_cards.draw, Card{definition = &defend_card_definition})
+	append(&player.player_cards.draw, Card{definition = &defend_card_definition})
+	append(&player.player_cards.draw, Card{definition = &bash_card_definition})
 
 	//TODO: We don't have a main deck here, this game would more likely have a collection of starting cards and then you acquire more over time
 	//So the draw_pile should be seeded with the starting cards to begin with
 
-	shuffle_cards(&player.draw_pile)
+	shuffle_cards(&player.player_cards.draw)
 
-	refill_hand(&player.hand, &player.draw_pile, &player.discard_pile, player.hand_size)
+	refill_hand(&player.player_cards)
 
-	fmt.println("Draw Pile:", player.draw_pile)
-	fmt.println("Hand:", player.hand)
+	fmt.println("Draw Pile:", player.player_cards.draw)
+	fmt.println("Hand:", player.player_cards.hand)
 }
 
 destroy_cards :: proc() {
-	delete(player.discard_pile)
-	delete(player.draw_pile)
-	delete(player.hand)
+	delete(player.player_cards.discard)
+	delete(player.player_cards.draw)
+	delete(player.player_cards.hand)
 	cleanup_card_definitions()
 }
 

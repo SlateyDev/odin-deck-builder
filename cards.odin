@@ -16,6 +16,9 @@ Card :: struct {
     definition: ^Card_Definition,
     randomizer: i32,
     selected: bool,
+
+	position: rl.Vector2,
+	rotation: f32,
 }
 
 Card_Definition :: struct {
@@ -25,6 +28,13 @@ Card_Definition :: struct {
     kind: Card_Kind,
 	texture: rl.Texture2D,
 	card_proc: proc(),
+}
+
+Player_Cards :: struct {
+	hand: [dynamic]Card,
+	draw: [dynamic]Card,
+	discard: [dynamic]Card,
+	hand_size: int,
 }
 
 card_strike :: proc() {
@@ -109,18 +119,26 @@ move_cards_by :: proc(dest: ^[dynamic]Card, source: ^[dynamic]Card, test: proc(^
 	}
 }
 
+draw_card :: proc(player_cards: ^Player_Cards) {
+	if len(player_cards.draw) == 0 {
+		shuffle_cards(&player_cards.discard)
+		move_cards(&player_cards.draw, &player_cards.discard, len(player_cards.discard))
+	}
+	move_cards(&player_cards.hand, &player_cards.draw, 1)
+}
+
 //Refill cards from the draw pile, if the draw pile becomes empty, shuffle the discard pile back in
 //and draw the remaining
-refill_hand :: proc(hand: ^[dynamic]Card, draw: ^[dynamic]Card, discard: ^[dynamic]Card, hand_size: int) {
-	cards_to_draw := hand_size - len(hand)
+refill_hand :: proc(player_cards: ^Player_Cards) {
+	cards_to_draw := player_cards.hand_size - len(player_cards.hand)
 	//If cards_to_draw is <0 then we have too many, should we discard some?
-	draw_pile_cards := min(cards_to_draw, len(draw))
+	draw_pile_cards := min(cards_to_draw, len(player_cards.draw))
 	remaining_cards := cards_to_draw - draw_pile_cards
-	move_cards(hand, draw, hand_size - len(hand))
+	move_cards(&player_cards.hand, &player_cards.draw, player_cards.hand_size - len(player_cards.hand))
 	if remaining_cards > 0 {
-		shuffle_cards(discard)
-		move_cards(draw, discard, len(discard))
-		move_cards(hand, draw, remaining_cards)
+		shuffle_cards(&player_cards.discard)
+		move_cards(&player_cards.draw, &player_cards.discard, len(player_cards.discard))
+		move_cards(&player_cards.hand, &player_cards.draw, remaining_cards)
 	}
 }
 
@@ -128,28 +146,28 @@ CARD_WIDTH :: 278
 CARD_HEIGHT :: 378
 
 //Change to draw a card image and overlay with text
-draw_card :: proc(mouse_pos: rl.Vector2, position: rl.Vector2, card_info: Card, select_card: proc(Card)) {
-	card_rect := rl.Rectangle{position.x - CARD_WIDTH / 2, position.y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT}
-	brightness : f32 = 0
-	if rl.CheckCollisionPointRec(mouse_pos, card_rect) {
-		brightness = 0.2
-		if rl.IsMouseButtonReleased(.LEFT) {
-			if select_card != nil {
-				select_card(card_info)
-			}
-		}
-	}
-	rl.DrawRectangleRounded(card_rect, 0.14, 30, rl.ColorBrightness(rl.BEIGE, brightness))
-	rl.DrawRectangleRoundedLinesEx(card_rect, 0.14, 30, 1.5, rl.RED)
+// draw_card :: proc(mouse_pos: rl.Vector2, position: rl.Vector2, card_info: Card, select_card: proc(Card)) {
+// 	card_rect := rl.Rectangle{position.x - CARD_WIDTH / 2, position.y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT}
+// 	brightness : f32 = 0
+// 	if rl.CheckCollisionPointRec(mouse_pos, card_rect) {
+// 		brightness = 0.2
+// 		if rl.IsMouseButtonReleased(.LEFT) {
+// 			if select_card != nil {
+// 				select_card(card_info)
+// 			}
+// 		}
+// 	}
+// 	rl.DrawRectangleRounded(card_rect, 0.14, 30, rl.ColorBrightness(rl.BEIGE, brightness))
+// 	rl.DrawRectangleRoundedLinesEx(card_rect, 0.14, 30, 1.5, rl.RED)
 
-	rl.DrawRectangleRounded(rl.Rectangle{position.x - CARD_WIDTH / 2 + 5, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 10, CARD_WIDTH - 10, CARD_HEIGHT / 4}, 0.24, 30, rl.BLUE)
-	rl.DrawRectangleRoundedLinesEx(rl.Rectangle{position.x - CARD_WIDTH / 2 + 5, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 10, CARD_WIDTH - 10, CARD_HEIGHT / 4}, 0.24, 30, 1.5, rl.BLACK)
+// 	rl.DrawRectangleRounded(rl.Rectangle{position.x - CARD_WIDTH / 2 + 5, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 10, CARD_WIDTH - 10, CARD_HEIGHT / 4}, 0.24, 30, rl.BLUE)
+// 	rl.DrawRectangleRoundedLinesEx(rl.Rectangle{position.x - CARD_WIDTH / 2 + 5, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 10, CARD_WIDTH - 10, CARD_HEIGHT / 4}, 0.24, 30, 1.5, rl.BLACK)
 
-	text_width := rl.MeasureText("Title", 20)
-	rl.DrawText("Title", i32(position.x) - text_width / 2, i32(position.y) - CARD_HEIGHT / 2 + 10, 20, rl.WHITE)
+// 	text_width := rl.MeasureText("Title", 20)
+// 	rl.DrawText("Title", i32(position.x) - text_width / 2, i32(position.y) - CARD_HEIGHT / 2 + 10, 20, rl.WHITE)
 
-	// draw_text_boxed(rl.GetFontDefault(), "Here we add some flavour text with maybe a little bit of lorem ipsum. Just kidding, I can't remember lorem ipsum off by heart and I will just type some text to see what happened if it is really long", rl.Rectangle{position.x - CARD_WIDTH / 2 + 7, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 8, CARD_WIDTH - 14, CARD_HEIGHT / 4}, 10, 1.0, true, rl.WHITE)
-}
+// 	// draw_text_boxed(rl.GetFontDefault(), "Here we add some flavour text with maybe a little bit of lorem ipsum. Just kidding, I can't remember lorem ipsum off by heart and I will just type some text to see what happened if it is really long", rl.Rectangle{position.x - CARD_WIDTH / 2 + 7, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 8, CARD_WIDTH - 14, CARD_HEIGHT / 4}, 10, 1.0, true, rl.WHITE)
+// }
 
 create_card_texture :: proc(card_info: Card) -> rl.Texture2D {
 	//TODO: Instead of loading every time, it should use a cached image and use ImageCopy.
