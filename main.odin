@@ -125,8 +125,8 @@ start_game :: proc() {
 			found_hover := false
 			for &hand_card, card_index in player.player_cards.hand {
 				card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(card_index) * 200
-				card_y_pos := f32(currentScreenHeight) - 120 - math.cos((f32(len(player.player_cards.hand) / 2) - f32(card_index))) * 50
-				rotation := -(f32(len(player.player_cards.hand) - 1) / 2 - f32(card_index)) * 10
+				card_y_pos := f32(currentScreenHeight) - 120 - math.cos((f32(len(player.player_cards.hand) - 1) / 2 - f32(card_index))) * 50
+				rotation := -(f32(len(player.player_cards.hand) - 1) / 2 - f32(card_index)) * (60 / f32(len(player.player_cards.hand)))
 				card_tint := rl.GRAY
 
 				if rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), 200, CARD_HEIGHT + 50}) {

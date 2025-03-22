@@ -19,7 +19,7 @@ Idea: (This will change as the game develops)
 ### TODO:
 - [ ] Selection of cards to use
 - [ ] Create card definitions
-  - [ ] Starter cards
+  - [x] Starter cards
   - [ ] Rewarded cards
 - [x] Render some text to card word-wrapped inside an area
 - [x] Draw title centered in area
@@ -34,5 +34,5 @@ Idea: (This will change as the game develops)
 - [ ] Animate flipping of card
 - [x] Fanning cards
 - [x] Highlighting of hovered card
-- [ ] Animate hovered card out and back again when not hovered
+- [x] Animate hovered card out and back again when not hovered
 - [ ] Perform actions against enemy
