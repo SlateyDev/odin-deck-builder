@@ -45,6 +45,8 @@ main :: proc() {
 	start_game()
 }
 
+drag_card_index : Maybe(int)
+
 start_game :: proc() {
 	screenWidth: i32 = 1920
 	screenHeight: i32 = 1080
@@ -122,21 +124,31 @@ start_game :: proc() {
 				draw_card(&player.player_cards)
 			}
 
+			if rl.IsMouseButtonReleased(.LEFT) {
+				drag_card_index = nil
+			}
+
 			found_hover := false
+			dragging_index, dragging_ok := drag_card_index.(int)
+
 			for &hand_card, card_index in player.player_cards.hand {
 				card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(card_index) * 200
 				card_y_pos := f32(currentScreenHeight) - 120 - math.cos((f32(len(player.player_cards.hand) - 1) / 2 - f32(card_index))) * 50
 				rotation := -(f32(len(player.player_cards.hand) - 1) / 2 - f32(card_index)) * (60 / f32(len(player.player_cards.hand)))
 				card_tint := rl.GRAY
 
-				if rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), 200, CARD_HEIGHT + 50}) {
+				if (!dragging_ok && rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), 200, CARD_HEIGHT + 50})) || (dragging_ok && dragging_index == card_index) {
 					card_y_pos = f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
 					rotation = 0
 
 					card_tint = rl.WHITE
 					found_hover = true
+
+					if rl.IsMouseButtonPressed(.LEFT) {
+						drag_card_index = card_index
+					}
 				} else {
-					if rl.CheckCollisionPointRec(rl.GetMousePosition(), {f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), f32(len(player.player_cards.hand) * 200), CARD_HEIGHT + 50}) {
+					if dragging_ok || rl.CheckCollisionPointRec(rl.GetMousePosition(), {f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), f32(len(player.player_cards.hand) * 200), CARD_HEIGHT + 50}) {
 						if !found_hover {
 							card_x_pos -= 80
 						} else {
@@ -151,19 +163,17 @@ start_game :: proc() {
 				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {hand_card.position.x, hand_card.position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, hand_card.rotation, card_tint)
 			}
 
-			tangent_pos := rl.Vector2{20, mouse_pos.y}
+			if dragging_ok {
+				card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(dragging_index) * 200
+				card_y_pos := f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
 
-			draw_curve({20, f32(screenHeight - 20)}, tangent_pos, mouse_pos, tangent_pos)
+				source_pos := rl.Vector2{card_x_pos, card_y_pos}
+				source_tangent_pos := rl.Vector2{source_pos.x, mouse_pos.y + (source_pos.y - mouse_pos.y) / 8}
+				target_tangent_pos := rl.Vector2{source_pos.x + (source_pos.x - mouse_pos.x) / 8, mouse_pos.y}
 
-			// for _, card_index in player.hand {
-			// 	card_x_pos := f32(currentScreenWidth - i32(len(player.hand) - 1) * 200) / 2 + f32(card_index) * 200
-			// 	rl.DrawRectangleLinesEx({card_x_pos - 100, f32(currentScreenHeight) / 2 - 200, 200, CARD_HEIGHT}, 1, rl.RED)
-			// }
+				draw_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, int(rl.Vector2Length(source_pos - mouse_pos) / 50))
+			}
 
-			// rl.DrawLineV(tl, tr, rl.RED)
-			// rl.DrawLineV(tr, br, rl.RED)
-			// rl.DrawLineV(br, bl, rl.RED)
-			// rl.DrawLineV(bl, tl, rl.RED)
 			fps := int(rl.GetFPS())
 
 			strings.builder_reset(&builder)
@@ -327,10 +337,10 @@ entity_sorter :: proc(i: Node2D, j: Node2D) -> slice.Ordering {
 CURVED_SEGMENTS :: 24
 
 // Draw curve using Spline Cubic Bezier
-draw_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangent: rl.Vector2, curve_end_position: rl.Vector2, curve_end_position_tangent: rl.Vector2) {
-    step : f32 = 1.0 / CURVED_SEGMENTS
+draw_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangent: rl.Vector2, curve_end_position: rl.Vector2, curve_end_position_tangent: rl.Vector2, curve_segments: int) {
+    step : f32 = 1.0 / f32(curve_segments)
 
-    for i := 0; i <= CURVED_SEGMENTS; i += 1 {
+    for i := 0; i <= curve_segments; i += 1 {
         t := step * f32(i)
 
         a := math.pow(1.0 - t, 3)
