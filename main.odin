@@ -68,7 +68,7 @@ start_game :: proc() {
 		// deltaTime := rl.GetFrameTime()
 
 		// mouse coordinates
-		// mousePos := [2]i32{rl.GetMouseX(), rl.GetMouseY()}
+		mouse_pos := rl.GetMousePosition()
 
 		// mouse buttons
 		// @(static) buttons_to_key := [?]struct {
@@ -150,6 +150,10 @@ start_game :: proc() {
 
 				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {hand_card.position.x, hand_card.position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, hand_card.rotation, card_tint)
 			}
+
+			tangent_pos := rl.Vector2{20, mouse_pos.y}
+
+			draw_curve({20, f32(screenHeight - 20)}, tangent_pos, mouse_pos, tangent_pos)
 
 			// for _, card_index in player.hand {
 			// 	card_x_pos := f32(currentScreenWidth - i32(len(player.hand) - 1) * 200) / 2 + f32(card_index) * 200
@@ -318,4 +322,24 @@ entity_sorter :: proc(i: Node2D, j: Node2D) -> slice.Ordering {
 	if i.position.y > j.position.y do return slice.Ordering.Greater
 
 	return slice.Ordering.Equal
+}
+
+CURVED_SEGMENTS :: 24
+
+// Draw curve using Spline Cubic Bezier
+draw_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangent: rl.Vector2, curve_end_position: rl.Vector2, curve_end_position_tangent: rl.Vector2) {
+    step : f32 = 1.0 / CURVED_SEGMENTS
+
+    for i := 0; i <= CURVED_SEGMENTS; i += 1 {
+        t := step * f32(i)
+
+        a := math.pow(1.0 - t, 3)
+        b := 3.0 * math.pow(1.0 - t, 2) * t
+        c := 3.0 * (1.0 - t) * math.pow(t, 2)
+        d := math.pow(t, 3)
+
+		current := a * curve_start_position + b * curve_start_position_tangent + c * curve_end_position_tangent + d * curve_end_position
+
+		rl.DrawCircleV(current, 20, rl.BLUE)
+    }
 }
