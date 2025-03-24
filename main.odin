@@ -39,8 +39,17 @@ main :: proc() {
 
 	test_entities()
 
+	screenWidth: i32 = 1920
+	screenHeight: i32 = 1080
+
+	rl.InitWindow(screenWidth, screenHeight, "Deck Builder")
+	defer rl.CloseWindow()
+
 	setup_cards()
 	defer destroy_cards()
+
+	rl.SetWindowState({rl.ConfigFlag.WINDOW_RESIZABLE})
+	// SetTargetFPS(60)
 
 	start_game()
 }
@@ -48,19 +57,6 @@ main :: proc() {
 drag_card_index : Maybe(int)
 
 start_game :: proc() {
-	screenWidth: i32 = 1920
-	screenHeight: i32 = 1080
-
-	rl.InitWindow(screenWidth, screenHeight, "Deck Builder")
-	defer rl.CloseWindow()
-
-	card := create_card_texture(Card{definition = &{name = "CARD TITLE", flavour = "Testing adding some flavour text to see how it fills up the text area that has been defined", use_cost = 2}})
-	defer rl.UnloadTexture(card)
-
-	rl.SetWindowState({rl.ConfigFlag.WINDOW_RESIZABLE})
-
-	// SetTargetFPS(60)
-
 	camera := rl.Camera2D {
 		target = rl.Vector2{0, 0},
 		zoom   = 1,
@@ -160,7 +156,7 @@ start_game :: proc() {
 				hand_card.position = la.lerp(hand_card.position, rl.Vector2{card_x_pos, card_y_pos}, rl.GetFrameTime() * 5)
 				hand_card.rotation = la.lerp(hand_card.rotation, rotation, rl.GetFrameTime() * 5)
 
-				rl.DrawTexturePro(card, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {hand_card.position.x, hand_card.position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, hand_card.rotation, card_tint)
+				rl.DrawTexturePro(hand_card.definition.texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {hand_card.position.x, hand_card.position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, hand_card.rotation, card_tint)
 			}
 
 			if dragging_ok {

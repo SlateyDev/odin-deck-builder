@@ -53,6 +53,7 @@ cards := string(#load("card_definitions.csv"))
 
 card_definitions : [dynamic]Card_Definition
 
+//Starter cards
 strike_card_definition : Card_Definition = {name = "Strike", flavour = "Deal 6 damage.", use_cost = 1, kind = .Attack, card_proc = card_strike}
 defend_card_definition : Card_Definition = {name = "Defend", flavour = "Gain 5 Block.", use_cost = 1, kind = .Skill, card_proc = card_defend}
 bash_card_definition : Card_Definition = {name = "Bash", flavour = "Deal 8 damage.\nApply 2 Vulnerable.", use_cost = 2, kind = .Attack, card_proc = card_bash}
@@ -72,12 +73,24 @@ setup_card_definitions :: proc() {
     }
     fmt.println(csv_data)
 
-	// append(&card_definitions, Card_Definition{name = "CArd1", flavour = "", use_cost = 1, kind = .Attack, card_proc = card_})
+	// append(&card_definitions, Card_Definition{name = "Card1", flavour = "", use_cost = 1, kind = .Attack, card_proc = card_})
 	// append(&card_definitions, Card_Definition{name = "Card2", flavour = "", use_cost = 1, kind = .Skill, card_proc = card_})
 	// append(&card_definitions, Card_Definition{name = "Card3", flavour = "", use_cost = 2, kind = .Attack, card_proc = card_})
+
+	//Starter cards
+	create_card_texture(&strike_card_definition)
+	create_card_texture(&defend_card_definition)
+	create_card_texture(&bash_card_definition)
+
+	for &card_definition in card_definitions {
+		create_card_texture(&card_definition)
+	}
 }
 
 cleanup_card_definitions :: proc() {
+	rl.UnloadTexture(strike_card_definition.texture)
+	rl.UnloadTexture(defend_card_definition.texture)
+	rl.UnloadTexture(bash_card_definition.texture)
 	delete(card_definitions)
 }
 
@@ -169,7 +182,7 @@ CARD_HEIGHT :: 378
 // 	// draw_text_boxed(rl.GetFontDefault(), "Here we add some flavour text with maybe a little bit of lorem ipsum. Just kidding, I can't remember lorem ipsum off by heart and I will just type some text to see what happened if it is really long", rl.Rectangle{position.x - CARD_WIDTH / 2 + 7, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 8, CARD_WIDTH - 14, CARD_HEIGHT / 4}, 10, 1.0, true, rl.WHITE)
 // }
 
-create_card_texture :: proc(card_info: Card) -> rl.Texture2D {
+create_card_texture :: proc(card_definition: ^Card_Definition) {
 	//TODO: Instead of loading every time, it should use a cached image and use ImageCopy.
 	card_layout := rl.LoadImage("assets/card_layout.png")
 	defer rl.UnloadImage(card_layout)
@@ -180,14 +193,12 @@ create_card_texture :: proc(card_info: Card) -> rl.Texture2D {
 	rl.GenTextureMipmaps(&card_font.texture)
 	rl.SetTextureFilter(card_font.texture, .TRILINEAR)
 
-	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%s", card_info.definition.name), {CARD_WIDTH / 2, 273}, 12, rl.WHITE)
-	image_draw_text_boxed(&card_layout, card_font, card_info.definition.flavour, {83, 315, 112, 22}, 12, 1, true, rl.BLACK, -10)
+	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%s", card_definition.name), {CARD_WIDTH / 2, 273}, 12, rl.WHITE)
+	image_draw_text_boxed(&card_layout, card_font, card_definition.flavour, {83, 315, 112, 22}, 12, 1, true, rl.BLACK, -10)
 	rl.ImageDrawCircle(&card_layout, 38, 44, 20, rl.BLACK)
-	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%d", card_info.definition.use_cost), {38, 44}, 24, rl.GREEN)
+	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%d", card_definition.use_cost), {38, 44}, 24, rl.GREEN)
 
-	texture := rl.LoadTextureFromImage(card_layout)
-	rl.GenTextureMipmaps(&texture)
-	rl.SetTextureFilter(texture, .TRILINEAR)
-
-	return texture
+	card_definition.texture = rl.LoadTextureFromImage(card_layout)
+	rl.GenTextureMipmaps(&card_definition.texture)
+	rl.SetTextureFilter(card_definition.texture, .TRILINEAR)
 }
