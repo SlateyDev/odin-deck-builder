@@ -57,6 +57,12 @@ main :: proc() {
 drag_card_index : Maybe(int)
 reward_toggle := false
 
+start_dragging :: proc(proc_data: ^Render_Card_Proc_Data) {
+	if proc_data == nil do return
+
+	drag_card_index = proc_data.val
+}
+
 start_game :: proc() {
 	camera := rl.Camera2D {
 		target = rl.Vector2{0, 0},
@@ -144,10 +150,6 @@ start_game :: proc() {
 
 					card_tint = rl.WHITE
 					found_hover = true
-
-					if rl.IsMouseButtonPressed(.LEFT) {
-						drag_card_index = card_index
-					}
 				} else {
 					if dragging_ok || rl.CheckCollisionPointRec(rl.GetMousePosition(), {f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), f32(len(player.player_cards.hand) * 200), CARD_HEIGHT + 50}) {
 						if !found_hover {
@@ -161,7 +163,7 @@ start_game :: proc() {
 				hand_card.position = la.lerp(hand_card.position, rl.Vector2{card_x_pos, card_y_pos}, rl.GetFrameTime() * 5)
 				hand_card.rotation = la.lerp(hand_card.rotation, rotation, rl.GetFrameTime() * 5)
 
-				rl.DrawTexturePro(hand_card.definition.texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {hand_card.position.x, hand_card.position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, hand_card.rotation, card_tint)
+				render_card(hand_card.definition, mouse_pos, {hand_card.position.x, hand_card.position.y}, hand_card.rotation, card_tint, start_dragging, nil, &Render_Card_Proc_Data{val = card_index})
 			}
 
 			if dragging_ok {
@@ -376,9 +378,9 @@ render_select_reward :: proc(mouse_pos: rl.Vector2) {
 	current_screen_height := f32(rl.GetScreenHeight())
 
 	rl.DrawRectangleV({current_screen_width / 2 - CARD_WIDTH * 1.5 - 40, current_screen_height / 2 - CARD_HEIGHT / 2 - 60}, {CARD_WIDTH * 3 + 80, CARD_HEIGHT + 120}, rl.ColorAlpha(rl.BLACK, 0.5))
-	render_card(Card{definition = &card_definitions[0]}, mouse_pos, {current_screen_width / 2, current_screen_height / 2 - 30})
-	render_card(Card{definition = &card_definitions[0]}, mouse_pos, {current_screen_width / 2 - CARD_WIDTH - 20, current_screen_height / 2 - 30})
-	render_card(Card{definition = &card_definitions[0]}, mouse_pos, {current_screen_width / 2 + CARD_WIDTH + 20, current_screen_height / 2 - 30})
+	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2, current_screen_height / 2 - 30})
+	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2 - CARD_WIDTH - 20, current_screen_height / 2 - 30})
+	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2 + CARD_WIDTH + 20, current_screen_height / 2 - 30})
 
 	rl.DrawRectanglePro({current_screen_width / 2, current_screen_height / 2 - 40, 600, 40}, {300,20}, -20, rl.RED)
 	rl.DrawTextPro(rl.GetFontDefault(), "NOT IMPLEMENTED", {current_screen_width / 2, current_screen_height / 2 - 40}, {f32(rl.MeasureText("NOT IMPLEMENTED", 40) / 2),20}, -20, 40, 4, rl.WHITE)

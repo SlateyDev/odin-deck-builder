@@ -158,9 +158,37 @@ refill_hand :: proc(player_cards: ^Player_Cards) {
 CARD_WIDTH :: 278
 CARD_HEIGHT :: 378
 
+Render_Card_Proc_Data :: struct {
+	val: int,
+}
+
 //Change to draw a card image and overlay with text
-render_card :: proc(card_info: Card, mouse_pos: rl.Vector2, position: rl.Vector2, rotation: f32 = 0, tint: rl.Color = rl.WHITE, select_card: proc(Card) = nil) {
-	rl.DrawTexturePro(card_info.definition.texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {position.x, position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, tint)
+render_card :: proc(card_definition: ^Card_Definition, mouse_pos: rl.Vector2, position: rl.Vector2, rotation: f32 = 0, tint: rl.Color = rl.WHITE, mouse_pressed: proc(proc_data: ^Render_Card_Proc_Data) = nil, mouse_released: proc(proc_data: ^Render_Card_Proc_Data) = nil, proc_data: ^Render_Card_Proc_Data = nil) {
+	card_rect := rl.Rectangle{0, 0, CARD_WIDTH, CARD_HEIGHT}
+	card_rotation_rad := rotation * DEG_TO_RAD
+	tl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + position
+	tr := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y - card_rect.height / 2}, card_rotation_rad) + position
+	bl := rl.Vector2Rotate({card_rect.x - card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + position
+	br := rl.Vector2Rotate({card_rect.x + card_rect.width / 2, card_rect.y + card_rect.height / 2}, card_rotation_rad) + position
+
+	rl.DrawTexturePro(card_definition.texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {position.x, position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, tint)
+
+	points : []rl.Vector2 = {tl, tr, br, bl}
+	if rl.CheckCollisionPointPoly(rl.GetMousePosition(), raw_data(points), 4) {
+		if mouse_pressed != nil && rl.IsMouseButtonPressed(.LEFT) {
+			mouse_pressed(proc_data)
+		}
+		if mouse_released != nil && rl.IsMouseButtonReleased(.LEFT) {
+			mouse_released(proc_data)
+		}
+
+		rl.DrawLineV(tl, tr, rl.RED)
+		rl.DrawLineV(tr, br, rl.RED)
+		rl.DrawLineV(br, bl, rl.RED)
+		rl.DrawLineV(bl, tl, rl.RED)
+	}
+
+
 // 	card_rect := rl.Rectangle{position.x - CARD_WIDTH / 2, position.y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT}
 // 	brightness : f32 = 0
 // 	if rl.CheckCollisionPointRec(mouse_pos, card_rect) {
