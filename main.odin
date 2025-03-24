@@ -61,6 +61,7 @@ use_selected_card :: proc() {
 	dragging_index, dragging_ok := drag_card_index.(int)
 	if !dragging_ok do return
 
+	player.player_cards.hand[dragging_index].position = 0
 	move_card(&player.player_cards.discard, &player.player_cards.hand, dragging_index)
 	drag_card_index = nil
 }
