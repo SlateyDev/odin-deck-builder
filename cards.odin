@@ -109,6 +109,12 @@ card_shuffle_sorter := proc(i: Card, j: Card) -> slice.Ordering {
 }
 
 //Move a number of cards from source to destination
+move_card :: proc(dest: ^[dynamic]Card, source: ^[dynamic]Card, card_index: int) {
+	append(dest, source[card_index])
+	ordered_remove(source, card_index)
+}
+
+//Move a number of cards from source to destination
 move_cards :: proc(dest: ^[dynamic]Card, source: ^[dynamic]Card, amount: int) {
 	for _ in 0..<amount {
 		card, ok := pop_front_safe(source)

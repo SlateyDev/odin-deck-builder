@@ -17,7 +17,7 @@ Idea: (This will change as the game develops)
 * Attack cards can only be used on a single monster, not split over multiple, unless the card states otherwise.
 
 ### TODO:
-- [ ] Selection of cards to use
+- [x] Selection of cards to use
 - [ ] Create card definitions
   - [x] Starter cards
   - [ ] Rewarded cards
@@ -28,7 +28,7 @@ Idea: (This will change as the game develops)
 ### Optional:
 - [ ] Better card layout image
 - [ ] Card effects
-- [ ] Drag/drop cards
+- [x] Drag/drop cards
 - [x] Use a different font
 - [ ] Card back
 - [ ] Animate flipping of card

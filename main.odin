@@ -57,6 +57,14 @@ main :: proc() {
 drag_card_index : Maybe(int)
 reward_toggle := false
 
+use_selected_card :: proc() {
+	dragging_index, dragging_ok := drag_card_index.(int)
+	if !dragging_ok do return
+
+	move_card(&player.player_cards.discard, &player.player_cards.hand, dragging_index)
+	drag_card_index = nil
+}
+
 start_dragging :: proc(proc_data: ^Render_Card_Proc_Data) {
 	if proc_data == nil do return
 
@@ -131,10 +139,6 @@ start_game :: proc() {
 				reward_toggle = !reward_toggle
 			}
 
-			if rl.IsMouseButtonReleased(.LEFT) {
-				drag_card_index = nil
-			}
-
 			found_hover := false
 			dragging_index, dragging_ok := drag_card_index.(int)
 
@@ -169,6 +173,8 @@ start_game :: proc() {
 			}
 
 			if !reward_toggle {
+				render_hover_button(mouse_pos, "USE CARD HERE", {f32(currentScreenWidth) / 2 - 100, f32(currentScreenHeight) / 2 - 100, 200, 200}, 20, use_selected_card)
+
 				if dragging_ok {
 					card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(dragging_index) * 200
 					card_y_pos := f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
@@ -181,6 +187,10 @@ start_game :: proc() {
 				}
 			} else {
 				render_select_reward(mouse_pos)
+			}
+
+			if rl.IsMouseButtonReleased(.LEFT) {
+				drag_card_index = nil
 			}
 
 			fps := int(rl.GetFPS())
