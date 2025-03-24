@@ -144,18 +144,20 @@ start_game :: proc() {
 				rotation := -(f32(len(player.player_cards.hand) - 1) / 2 - f32(card_index)) * (60 / f32(len(player.player_cards.hand)))
 				card_tint := rl.GRAY
 
-				if (!dragging_ok && rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), 200, CARD_HEIGHT + 50})) || (dragging_ok && dragging_index == card_index) {
-					card_y_pos = f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
-					rotation = 0
+				if !reward_toggle {
+					if (!dragging_ok && rl.CheckCollisionPointRec(rl.GetMousePosition(), {card_x_pos - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), 200, CARD_HEIGHT + 50})) || (dragging_ok && dragging_index == card_index) {
+						card_y_pos = f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
+						rotation = 0
 
-					card_tint = rl.WHITE
-					found_hover = true
-				} else {
-					if dragging_ok || rl.CheckCollisionPointRec(rl.GetMousePosition(), {f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), f32(len(player.player_cards.hand) * 200), CARD_HEIGHT + 50}) {
-						if !found_hover {
-							card_x_pos -= 80
-						} else {
-							card_x_pos += 80
+						card_tint = rl.WHITE
+						found_hover = true
+					} else {
+						if dragging_ok || rl.CheckCollisionPointRec(rl.GetMousePosition(), {f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 - 100, f32(currentScreenHeight - CARD_HEIGHT - 50), f32(len(player.player_cards.hand) * 200), CARD_HEIGHT + 50}) {
+							if !found_hover {
+								card_x_pos -= 80
+							} else {
+								card_x_pos += 80
+							}
 						}
 					}
 				}
@@ -163,21 +165,21 @@ start_game :: proc() {
 				hand_card.position = la.lerp(hand_card.position, rl.Vector2{card_x_pos, card_y_pos}, rl.GetFrameTime() * 5)
 				hand_card.rotation = la.lerp(hand_card.rotation, rotation, rl.GetFrameTime() * 5)
 
-				render_card(hand_card.definition, mouse_pos, {hand_card.position.x, hand_card.position.y}, hand_card.rotation, card_tint, start_dragging, nil, &Render_Card_Proc_Data{val = card_index})
+				render_card(hand_card.definition, mouse_pos, {hand_card.position.x, hand_card.position.y}, hand_card.rotation, card_tint, card_tint, start_dragging, nil, &Render_Card_Proc_Data{val = card_index})
 			}
 
-			if dragging_ok {
-				card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(dragging_index) * 200
-				card_y_pos := f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
+			if !reward_toggle {
+				if dragging_ok {
+					card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(dragging_index) * 200
+					card_y_pos := f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
 
-				source_pos := rl.Vector2{card_x_pos, card_y_pos}
-				source_tangent_pos := rl.Vector2{source_pos.x, mouse_pos.y + (source_pos.y - mouse_pos.y) / 8}
-				target_tangent_pos := rl.Vector2{source_pos.x + (source_pos.x - mouse_pos.x) / 8, mouse_pos.y}
+					source_pos := rl.Vector2{card_x_pos, card_y_pos}
+					source_tangent_pos := rl.Vector2{source_pos.x, mouse_pos.y + (source_pos.y - mouse_pos.y) / 8}
+					target_tangent_pos := rl.Vector2{source_pos.x + (source_pos.x - mouse_pos.x) / 8, mouse_pos.y}
 
-				render_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, int(rl.Vector2Length(source_pos - mouse_pos) / 50))
-			}
-
-			if reward_toggle {
+					render_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, int(rl.Vector2Length(source_pos - mouse_pos) / 50))
+				}
+			} else {
 				render_select_reward(mouse_pos)
 			}
 
@@ -361,16 +363,18 @@ render_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tang
     }
 }
 
-select_card :: proc(card: Card) {
+select_card :: proc(proc_data: ^Render_Card_Proc_Data) {
+	reward_toggle = false
 
+	append(&player.player_cards.discard, Card{definition = proc_data.card_definition})
 }
 
 next_wave :: proc() {
-
+	reward_toggle = false
 }
 
 return_to_title :: proc() {
-
+	reward_toggle = false
 }
 
 render_select_reward :: proc(mouse_pos: rl.Vector2) {
@@ -378,12 +382,12 @@ render_select_reward :: proc(mouse_pos: rl.Vector2) {
 	current_screen_height := f32(rl.GetScreenHeight())
 
 	rl.DrawRectangleV({current_screen_width / 2 - CARD_WIDTH * 1.5 - 40, current_screen_height / 2 - CARD_HEIGHT / 2 - 60}, {CARD_WIDTH * 3 + 80, CARD_HEIGHT + 120}, rl.ColorAlpha(rl.BLACK, 0.5))
-	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2, current_screen_height / 2 - 30})
-	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2 - CARD_WIDTH - 20, current_screen_height / 2 - 30})
-	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2 + CARD_WIDTH + 20, current_screen_height / 2 - 30})
+	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2, current_screen_height / 2 - 30}, 0, rl.GRAY, rl.WHITE, nil, select_card, &Render_Card_Proc_Data{pass_definition = true})
+	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2 - CARD_WIDTH - 20, current_screen_height / 2 - 30}, 0, rl.GRAY, rl.WHITE, nil, select_card, &Render_Card_Proc_Data{pass_definition = true})
+	render_card(&card_definitions[0], mouse_pos, {current_screen_width / 2 + CARD_WIDTH + 20, current_screen_height / 2 - 30}, 0, rl.GRAY, rl.WHITE, nil, select_card, &Render_Card_Proc_Data{pass_definition = true})
 
-	rl.DrawRectanglePro({current_screen_width / 2, current_screen_height / 2 - 40, 600, 40}, {300,20}, -20, rl.RED)
-	rl.DrawTextPro(rl.GetFontDefault(), "NOT IMPLEMENTED", {current_screen_width / 2, current_screen_height / 2 - 40}, {f32(rl.MeasureText("NOT IMPLEMENTED", 40) / 2),20}, -20, 40, 4, rl.WHITE)
+	// rl.DrawRectanglePro({current_screen_width / 2, current_screen_height / 2 - 40, 600, 40}, {300,20}, -20, rl.RED)
+	// rl.DrawTextPro(rl.GetFontDefault(), "NOT IMPLEMENTED", {current_screen_width / 2, current_screen_height / 2 - 40}, {f32(rl.MeasureText("NOT IMPLEMENTED", 40) / 2),20}, -20, 40, 4, rl.WHITE)
 	render_hover_button(mouse_pos, "Skip Reward", {current_screen_width / 2 - 70 - 100, current_screen_height / 2 + 180, 140, 40}, 20, next_wave)
 	render_hover_button(mouse_pos, "Quit", {current_screen_width / 2 - 70 + 100, current_screen_height / 2 + 180, 140, 40}, 20, return_to_title)
 }
