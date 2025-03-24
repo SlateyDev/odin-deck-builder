@@ -4,15 +4,20 @@ import "core:fmt"
 import "core:strings"
 import rl "vendor:raylib"
 
-image_draw_centered_text :: proc(dst: ^rl.Image, font: rl.Font, text: cstring, pos: rl.Vector2, font_size: f32, fore_color: rl.Color) {
+image_render_centered_text :: proc(dst: ^rl.Image, font: rl.Font, text: cstring, pos: rl.Vector2, font_size: f32, fore_color: rl.Color) {
 	text_size := rl.MeasureTextEx(font, text, font_size, 2)
 	rl.ImageDrawTextEx(dst, font, text, {pos.x - text_size.x / 2, pos.y - text_size.y / 2}, font_size, 2, fore_color)
 }
 
-MEASURE_STATE :: false
-DRAW_STATE :: true
+render_centered_text :: proc(font: rl.Font, text: cstring, pos: rl.Vector2, font_size: f32, fore_color: rl.Color) {
+	text_size := rl.MeasureTextEx(font, text, font_size, 2)
+	rl.DrawTextEx(font, text, {pos.x - text_size.x / 2, pos.y - text_size.y / 2}, font_size, 2, fore_color)
+}
 
-image_draw_text_boxed :: proc(dst: ^rl.Image, font: rl.Font, text: string, rec: rl.Rectangle, fontSize: f32, spacing: f32, wordWrap: bool, tint: rl.Color, leading: f32 = 0.0) {
+MEASURE_STATE :: false
+RENDER_STATE :: true
+
+image_render_text_boxed :: proc(dst: ^rl.Image, font: rl.Font, text: string, rec: rl.Rectangle, fontSize: f32, spacing: f32, wordWrap: bool, tint: rl.Color, leading: f32 = 0.0) {
 	length := i32(len(text))
 
 	textOffsetY : f32 = 0.0          // Offset between lines (on line break '\n')
@@ -21,7 +26,7 @@ image_draw_text_boxed :: proc(dst: ^rl.Image, font: rl.Font, text: string, rec: 
     scaleFactor := fontSize / f32(font.baseSize)
 
     // Word/character wrapping mechanism variables
-    state := wordWrap? MEASURE_STATE : DRAW_STATE
+    state := wordWrap? MEASURE_STATE : RENDER_STATE
 
     startLine : i32 = -1         // Index where to begin drawing (where a line begins)
     endLine : i32 = -1           // Index where to stop drawing (where a line ends)
@@ -71,7 +76,7 @@ image_draw_text_boxed :: proc(dst: ^rl.Image, font: rl.Font, text: string, rec: 
 				state = !state
 			}
 
-            if state == DRAW_STATE {
+            if state == RENDER_STATE {
                 textOffsetX = 0
                 i = startLine
                 glyphWidth = 0
@@ -119,4 +124,28 @@ image_draw_text_boxed :: proc(dst: ^rl.Image, font: rl.Font, text: string, rec: 
 		i += 1
 		k += 1
     }
+}
+
+render_button :: proc(text: cstring, rect: rl.Rectangle, font_size: f32, back_color: rl.Color, fore_color: rl.Color) {
+	font := rl.GetFontDefault()
+	rl.DrawRectangle(i32(rect.x), i32(rect.y), i32(rect.width), i32(rect.height), back_color)
+	render_centered_text(font, text, {rect.x + rect.width / 2, rect.y + rect.height / 2}, font_size, fore_color)
+}
+
+render_hover_button :: proc(mouse_pos: rl.Vector2, text: cstring, rect: rl.Rectangle, font_size: f32, clicked: proc()) {
+	if rl.CheckCollisionPointRec(mouse_pos, rect) {
+		if rl.IsMouseButtonDown(.LEFT) {
+			render_button(text, rect, font_size, rl.DARKPURPLE, rl.WHITE)
+		} else {
+			render_button(text, rect, font_size, rl.DARKGREEN, rl.WHITE)
+		}
+	} else {
+		render_button(text, rect, font_size, rl.DARKBLUE, rl.WHITE)
+	}
+
+	if rl.IsMouseButtonReleased(.LEFT) {
+		if rl.CheckCollisionPointRec(mouse_pos, rect) {
+			clicked()
+		}
+	}
 }

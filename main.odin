@@ -55,6 +55,7 @@ main :: proc() {
 }
 
 drag_card_index : Maybe(int)
+reward_toggle := false
 
 start_game :: proc() {
 	camera := rl.Camera2D {
@@ -120,6 +121,10 @@ start_game :: proc() {
 				draw_card(&player.player_cards)
 			}
 
+			if rl.IsKeyPressed(.X) {
+				reward_toggle = !reward_toggle
+			}
+
 			if rl.IsMouseButtonReleased(.LEFT) {
 				drag_card_index = nil
 			}
@@ -167,7 +172,11 @@ start_game :: proc() {
 				source_tangent_pos := rl.Vector2{source_pos.x, mouse_pos.y + (source_pos.y - mouse_pos.y) / 8}
 				target_tangent_pos := rl.Vector2{source_pos.x + (source_pos.x - mouse_pos.x) / 8, mouse_pos.y}
 
-				draw_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, int(rl.Vector2Length(source_pos - mouse_pos) / 50))
+				render_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, int(rl.Vector2Length(source_pos - mouse_pos) / 50))
+			}
+
+			if reward_toggle {
+				render_select_reward(mouse_pos)
 			}
 
 			fps := int(rl.GetFPS())
@@ -263,7 +272,7 @@ setup_cards :: proc() {
 	append(&player.player_cards.draw, Card{definition = &bash_card_definition})
 
 	//TODO: We don't have a main deck here, this game would more likely have a collection of starting cards and then you acquire more over time
-	//So the draw_pile should be seeded with the starting cards to begin with
+	//So the draw pile should be seeded with the starting cards to begin with
 
 	shuffle_cards(&player.player_cards.draw)
 
@@ -333,7 +342,7 @@ entity_sorter :: proc(i: Node2D, j: Node2D) -> slice.Ordering {
 CURVED_SEGMENTS :: 24
 
 // Draw curve using Spline Cubic Bezier
-draw_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangent: rl.Vector2, curve_end_position: rl.Vector2, curve_end_position_tangent: rl.Vector2, curve_segments: int) {
+render_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangent: rl.Vector2, curve_end_position: rl.Vector2, curve_end_position_tangent: rl.Vector2, curve_segments: int) {
     step : f32 = 1.0 / f32(curve_segments)
 
     for i := 0; i <= curve_segments; i += 1 {
@@ -348,4 +357,31 @@ draw_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangen
 
 		rl.DrawCircleV(current, 20, rl.BLUE)
     }
+}
+
+select_card :: proc(card: Card) {
+
+}
+
+next_wave :: proc() {
+
+}
+
+return_to_title :: proc() {
+
+}
+
+render_select_reward :: proc(mouse_pos: rl.Vector2) {
+	current_screen_width := f32(rl.GetScreenWidth())
+	current_screen_height := f32(rl.GetScreenHeight())
+
+	rl.DrawRectangleV({current_screen_width / 2 - CARD_WIDTH * 1.5 - 40, current_screen_height / 2 - CARD_HEIGHT / 2 - 60}, {CARD_WIDTH * 3 + 80, CARD_HEIGHT + 120}, rl.ColorAlpha(rl.BLACK, 0.5))
+	render_card(Card{definition = &card_definitions[0]}, mouse_pos, {current_screen_width / 2, current_screen_height / 2 - 30})
+	render_card(Card{definition = &card_definitions[0]}, mouse_pos, {current_screen_width / 2 - CARD_WIDTH - 20, current_screen_height / 2 - 30})
+	render_card(Card{definition = &card_definitions[0]}, mouse_pos, {current_screen_width / 2 + CARD_WIDTH + 20, current_screen_height / 2 - 30})
+
+	rl.DrawRectanglePro({current_screen_width / 2, current_screen_height / 2 - 40, 600, 40}, {300,20}, -20, rl.RED)
+	rl.DrawTextPro(rl.GetFontDefault(), "NOT IMPLEMENTED", {current_screen_width / 2, current_screen_height / 2 - 40}, {f32(rl.MeasureText("NOT IMPLEMENTED", 40) / 2),20}, -20, 40, 4, rl.WHITE)
+	render_hover_button(mouse_pos, "Skip Reward", {current_screen_width / 2 - 70 - 100, current_screen_height / 2 + 180, 140, 40}, 20, next_wave)
+	render_hover_button(mouse_pos, "Quit", {current_screen_width / 2 - 70 + 100, current_screen_height / 2 + 180, 140, 40}, 20, return_to_title)
 }

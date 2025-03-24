@@ -73,7 +73,7 @@ setup_card_definitions :: proc() {
     }
     fmt.println(csv_data)
 
-	// append(&card_definitions, Card_Definition{name = "Card1", flavour = "", use_cost = 1, kind = .Attack, card_proc = card_})
+	append(&card_definitions, Card_Definition{name = "CARD TITLE", flavour = "Some flavour text goes here", use_cost = 1, kind = .Attack, card_proc = card_bash})
 	// append(&card_definitions, Card_Definition{name = "Card2", flavour = "", use_cost = 1, kind = .Skill, card_proc = card_})
 	// append(&card_definitions, Card_Definition{name = "Card3", flavour = "", use_cost = 2, kind = .Attack, card_proc = card_})
 
@@ -159,7 +159,8 @@ CARD_WIDTH :: 278
 CARD_HEIGHT :: 378
 
 //Change to draw a card image and overlay with text
-// draw_card :: proc(mouse_pos: rl.Vector2, position: rl.Vector2, card_info: Card, select_card: proc(Card)) {
+render_card :: proc(card_info: Card, mouse_pos: rl.Vector2, position: rl.Vector2, rotation: f32 = 0, tint: rl.Color = rl.WHITE, select_card: proc(Card) = nil) {
+	rl.DrawTexturePro(card_info.definition.texture, {0, 0, CARD_WIDTH, CARD_HEIGHT}, {position.x, position.y, CARD_WIDTH, CARD_HEIGHT}, {CARD_WIDTH / 2, CARD_HEIGHT / 2}, rotation, tint)
 // 	card_rect := rl.Rectangle{position.x - CARD_WIDTH / 2, position.y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT}
 // 	brightness : f32 = 0
 // 	if rl.CheckCollisionPointRec(mouse_pos, card_rect) {
@@ -180,7 +181,7 @@ CARD_HEIGHT :: 378
 // 	rl.DrawText("Title", i32(position.x) - text_width / 2, i32(position.y) - CARD_HEIGHT / 2 + 10, 20, rl.WHITE)
 
 // 	// draw_text_boxed(rl.GetFontDefault(), "Here we add some flavour text with maybe a little bit of lorem ipsum. Just kidding, I can't remember lorem ipsum off by heart and I will just type some text to see what happened if it is really long", rl.Rectangle{position.x - CARD_WIDTH / 2 + 7, position.y - CARD_HEIGHT / 4 + CARD_HEIGHT / 2 - 8, CARD_WIDTH - 14, CARD_HEIGHT / 4}, 10, 1.0, true, rl.WHITE)
-// }
+}
 
 create_card_texture :: proc(card_definition: ^Card_Definition) {
 	//TODO: Instead of loading every time, it should use a cached image and use ImageCopy.
@@ -193,10 +194,10 @@ create_card_texture :: proc(card_definition: ^Card_Definition) {
 	rl.GenTextureMipmaps(&card_font.texture)
 	rl.SetTextureFilter(card_font.texture, .TRILINEAR)
 
-	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%s", card_definition.name), {CARD_WIDTH / 2, 273}, 12, rl.WHITE)
-	image_draw_text_boxed(&card_layout, card_font, card_definition.flavour, {83, 315, 112, 22}, 12, 1, true, rl.BLACK, -10)
+	image_render_centered_text(&card_layout, card_font, fmt.ctprintf("%s", card_definition.name), {CARD_WIDTH / 2, 273}, 12, rl.WHITE)
+	image_render_text_boxed(&card_layout, card_font, card_definition.flavour, {83, 315, 112, 22}, 12, 1, true, rl.BLACK, -10)
 	rl.ImageDrawCircle(&card_layout, 38, 44, 20, rl.BLACK)
-	image_draw_centered_text(&card_layout, card_font, fmt.ctprintf("%d", card_definition.use_cost), {38, 44}, 24, rl.GREEN)
+	image_render_centered_text(&card_layout, card_font, fmt.ctprintf("%d", card_definition.use_cost), {38, 44}, 24, rl.GREEN)
 
 	card_definition.texture = rl.LoadTextureFromImage(card_layout)
 	rl.GenTextureMipmaps(&card_definition.texture)
