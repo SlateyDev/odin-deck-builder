@@ -174,6 +174,9 @@ start_game :: proc() {
 			}
 
 			if !reward_toggle {
+				render_hover_button(mouse_pos, "GET REWARD (X)", {50, 100, 200, 30}, 20, proc() {reward_toggle = !reward_toggle})
+				render_hover_button(mouse_pos, "DRAW CARD (A)", {50, 150, 200, 30}, 20, proc() {draw_card(&player.player_cards)})
+
 				render_hover_button(mouse_pos, "USE CARD HERE", {f32(currentScreenWidth) / 2 - 100, f32(currentScreenHeight) / 2 - 100, 200, 200}, 20, use_selected_card)
 
 				if dragging_ok {
