@@ -184,7 +184,7 @@ start_game :: proc() {
 					source_tangent_pos := rl.Vector2{source_pos.x, mouse_pos.y + (source_pos.y - mouse_pos.y) / 8}
 					target_tangent_pos := rl.Vector2{source_pos.x + (source_pos.x - mouse_pos.x) / 8, mouse_pos.y}
 
-					render_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, int(rl.Vector2Length(source_pos - mouse_pos) / 50))
+					render_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, 50)
 				}
 			} else {
 				render_select_reward(mouse_pos)
@@ -357,10 +357,15 @@ entity_sorter :: proc(i: Node2D, j: Node2D) -> slice.Ordering {
 CURVED_SEGMENTS :: 24
 
 // Draw curve using Spline Cubic Bezier
-render_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangent: rl.Vector2, curve_end_position: rl.Vector2, curve_end_position_tangent: rl.Vector2, curve_segments: int) {
+// TODO: add uniform distance between points by working out the length while iterating through the curve and interpolating the points
+render_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tangent: rl.Vector2, curve_end_position: rl.Vector2, curve_end_position_tangent: rl.Vector2, curve_segments: int, point_distance: f32 = 50.0) {
     step : f32 = 1.0 / f32(curve_segments)
+	current_length : f32 = 0.0
+	next_point_length : f32 = 0.0
+	current_segment_point : rl.Vector2 = curve_start_position
+	last_segment_point : rl.Vector2
 
-    for i := 0; i <= curve_segments; i += 1 {
+    for i := 1; i <= curve_segments; i += 1 {
         t := step * f32(i)
 
         a := math.pow(1.0 - t, 3)
@@ -368,9 +373,19 @@ render_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tang
         c := 3.0 * (1.0 - t) * math.pow(t, 2)
         d := math.pow(t, 3)
 
-		current := a * curve_start_position + b * curve_start_position_tangent + c * curve_end_position_tangent + d * curve_end_position
+		last_segment_point = current_segment_point
+		current_segment_point = a * curve_start_position + b * curve_start_position_tangent + c * curve_end_position_tangent + d * curve_end_position
+		segment_length := rl.Vector2Length(current_segment_point - last_segment_point)
 
-		rl.DrawCircleV(current, 20, rl.BLUE)
+		for current_length + segment_length >= next_point_length {
+			point := la.lerp(last_segment_point, current_segment_point, (next_point_length - current_length) / segment_length)
+			rl.DrawCircleV(point, 20, rl.BLUE)
+
+			next_point_length += point_distance
+		}
+
+		current_length += segment_length
+		// rl.DrawCircleV(current_segment_point, 20, rl.RED)
     }
 }
 
