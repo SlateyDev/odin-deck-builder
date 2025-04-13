@@ -184,7 +184,7 @@ start_game :: proc() {
 					source_tangent_pos := rl.Vector2{source_pos.x, mouse_pos.y + (source_pos.y - mouse_pos.y) / 8}
 					target_tangent_pos := rl.Vector2{source_pos.x + (source_pos.x - mouse_pos.x) / 8, mouse_pos.y}
 
-					render_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, 50)
+					render_curve(source_pos, source_tangent_pos, mouse_pos, target_tangent_pos, 20)
 				}
 			} else {
 				render_select_reward(mouse_pos)
@@ -385,7 +385,6 @@ render_curve :: proc(curve_start_position: rl.Vector2, curve_start_position_tang
 		}
 
 		current_length += segment_length
-		// rl.DrawCircleV(current_segment_point, 20, rl.RED)
     }
 }
 
