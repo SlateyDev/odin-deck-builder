@@ -132,14 +132,6 @@ start_game :: proc() {
 
 			rl.DrawText("Testing", 190, 200, 20, rl.LIGHTGRAY)
 
-			if rl.IsKeyPressed(.A) {
-				draw_card(&player.player_cards)
-			}
-
-			if rl.IsKeyPressed(.X) {
-				reward_toggle = !reward_toggle
-			}
-
 			found_hover := false
 			dragging_index, dragging_ok := drag_card_index.(int)
 
@@ -174,12 +166,19 @@ start_game :: proc() {
 			}
 
 			if !reward_toggle {
-				render_hover_button(mouse_pos, "GET REWARD (X)", {50, 100, 200, 30}, 20, proc() {reward_toggle = !reward_toggle})
-				render_hover_button(mouse_pos, "DRAW CARD (A)", {50, 150, 200, 30}, 20, proc() {draw_card(&player.player_cards)})
+				render_hover_button(mouse_pos, "DRAG CARD HERE TO USE", {f32(currentScreenWidth) / 2 - 170, f32(currentScreenHeight) / 2 - 100, 340, 200}, 20, use_selected_card)
 
-				render_hover_button(mouse_pos, "USE CARD HERE", {f32(currentScreenWidth) / 2 - 100, f32(currentScreenHeight) / 2 - 100, 200, 200}, 20, use_selected_card)
-
-				if dragging_ok {
+				if !dragging_ok {
+					if rl.IsKeyPressed(.A) {
+						draw_card(&player.player_cards)
+					}
+					if rl.IsKeyPressed(.X) {
+						reward_toggle = !reward_toggle
+					}
+		
+					render_hover_button(mouse_pos, "GET REWARD (X)", {50, 100, 200, 30}, 20, proc() {reward_toggle = !reward_toggle})
+					render_hover_button(mouse_pos, "DRAW CARD (A)", {50, 150, 200, 30}, 20, proc() {draw_card(&player.player_cards)})
+				} else {
 					card_x_pos := f32(currentScreenWidth - i32(len(player.player_cards.hand) - 1) * 200) / 2 + f32(dragging_index) * 200
 					card_y_pos := f32(currentScreenHeight - CARD_HEIGHT / 2 - 50)
 
